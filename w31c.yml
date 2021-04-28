@@ -1,0 +1,5 @@
+apache_config: test/apache.cfg
+vrd_path: test_vrd
+platform_path: /opt/1C/x86_64/current
+debug: false
+server_addr: localhost
