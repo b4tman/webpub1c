@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import fire
 import jinja2
@@ -6,6 +6,57 @@ import logging
 import yaml
 import os
 import re
+import glob
+
+class VrdManager:
+    def __init__(self, path: str):
+        self.path = path
+
+    def is_valid(self) -> bool:
+        return os.path.exists(self.path)
+
+    def _check(self):
+        if not self.is_valid():
+            raise ValueError('invalid vrd path')
+
+    @property
+    def files(self) -> List[str]:
+        self._check()
+
+        result: List[str] = []
+        for file in glob.glob(os.path.join(self.path, '*.vrd')):
+            ibname: str = os.path.splitext(os.path.basename(file))[0]
+            result.append(ibname)
+        return result
+
+    def filename(self, ibname: str) -> str:
+        return os.path.join(self.path, f'{ibname}.vrd')
+
+    def exists(self, ibname: str) -> bool:
+        return os.path.exists(self.filename(ibname))
+
+    def add(self, ibname, params: Dict):
+        self._check()
+
+        if self.exists(ibname):
+            raise KeyError(f'vrd file "{ibname}" exists')
+        vrd_params = {
+            'ibname': ibname
+        }
+        vrd_params.update(params)
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
+        template = env.get_template('vrd.xml')
+
+        vrd_data = template.render(ctx=vrd_params)
+        with open(self.filename(ibname), "w") as f:
+            f.write(vrd_data)
+
+    def remove(self, ibname):
+        self._check()
+
+        if not self.exists(ibname):
+            raise KeyError(f'vrd file "{ibname}" not found')
+        os.unlink(self.filename(ibname))
 
 
 class ApacheConfig:
@@ -95,9 +146,11 @@ class Commands:
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
             self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
+            self._vrdmgr = VrdManager(self._config['vrd_path'])
 
     def list(self):
         """ List publications """
+        print(self._vrdmgr.files)
         return self._apache_cfg.publications
 
     def check(self):
