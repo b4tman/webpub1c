@@ -2,9 +2,9 @@
 <point xmlns="http://v8.1c.ru/8.2/virtual-resource-system"
 		xmlns:xs="http://www.w3.org/2001/XMLSchema"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		base="/{{ ctx.pub_name }}"
-		ib="Srvr=&quot;{{ ctx.server_addr }}&quot;;Ref=&quot;{{ ctx.ibase }}&quot;;"
-		enableStandardOData="true">
+		base="/{{ ctx.ibname }}"
+		ib="Srvr=&quot;{{ ctx.server_addr }}&quot;;Ref=&quot;{{ ctx.ibname }}&quot;;"
+		enableStandardOData="false">
     {% if ctx.debug %}
 	<debug enable="true"
 			protocol="tcp"

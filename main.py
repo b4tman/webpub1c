@@ -14,8 +14,9 @@ class ApacheConfig:
     start_tag: str = '# --- W31C PUBLICATION START:'
     end_tag: str = '# --- W31C PUBLICATION END:'
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, vrd_path: str):
         self.filename = filename
+        self.vrd_path = vrd_path
 
     def is_valid(self) -> bool:
         return os.path.exists(self.filename)
@@ -28,7 +29,7 @@ class ApacheConfig:
     def publications(self) -> List[str]:
         self._check()
 
-        result = []
+        result: List[str] = []
         start_expr = re.compile('^{}\\s([^\\s]*)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
         with open(self.filename, 'r') as f:
             txt = f.read()
@@ -37,19 +38,50 @@ class ApacheConfig:
 
         return result
 
-    def is_publicated(self, ibname: str):
+    def is_publicated(self, ibname: str) -> bool:
         return ibname in self.publications
 
     def add_publication(self, ibname: str):
         if self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" already publicated')
 
-        return
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
+        template = env.get_template('apache_pub.cfg')
+        pub_params = {
+            'vrd_filename': os.path.join(self.vrd_path, f'{ibname}.vrd'),
+            'ibname': ibname
+        }
+        pub = template.render(ctx=pub_params)
+
+        with open(self.filename, "a") as f:
+            f.write(f'\n{ApacheConfig.start_tag} {ibname}\n')
+            f.write(pub)
+            f.write(f'\n{ApacheConfig.end_tag} {ibname}\n')
 
     def remove_publication(self, ibname: str):
         if not self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" not publicated')
 
+        start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
+        end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
+        lines: List[str] = []
+        skip_flag: bool = False
+        with open(self.filename, "r+") as f:
+            for line in f:
+                lines.append(line)
+
+            f.seek(0)
+            f.truncate()
+
+            for line in lines:
+                if skip_flag:
+                    if end_pub.match(line):
+                        skip_flag = False
+                    continue
+                if start_pub.match(line):
+                    skip_flag = True
+                    continue
+                f.write(line)
         return
 
 
@@ -62,7 +94,7 @@ class Commands:
         logging.getLogger("w31c").setLevel(level)
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
-            self._apache_cfg = ApacheConfig(self._config['apache_config'])
+            self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
 
     def list(self):
         """ List publications """
@@ -76,15 +108,15 @@ class Commands:
         print('apache cfg is {}'.format('valid' if apache_cfg_valid else 'invalid'))
         return
 
-    def add(self, ibase):
+    def add(self, ibname):
         """ Add new publication """
-        self._apache_cfg.add_publication(ibase)
-        print(f'publication added: {ibase}')
+        self._apache_cfg.add_publication(ibname)
+        print(f'publication added: {ibname}')
 
-    def remove(self, ibase):
+    def remove(self, ibname):
         """ Remove publication """
-        self._apache_cfg.remove_publication(ibase)
-        print(f'publication removed: {ibase}')
+        self._apache_cfg.remove_publication(ibname)
+        print(f'publication removed: {ibname}')
 
 
 def main(args=None):
