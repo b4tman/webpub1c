@@ -1,17 +1,17 @@
-from typing import List, Dict
+import glob
+import logging
+import os
+import re
+from typing import List, Dict, Union
 
 import fire
 import jinja2
-import logging
 import yaml
-import os
-import re
-import glob
 
 
 class VrdManager:
     def __init__(self, path: str):
-        self.path = path
+        self.path: str = path
 
     def is_valid(self) -> bool:
         return os.path.exists(self.path)
@@ -36,23 +36,23 @@ class VrdManager:
     def exists(self, ibname: str) -> bool:
         return os.path.exists(self.filename(ibname))
 
-    def add(self, ibname, params: Dict):
+    def add(self, ibname: str, params: Dict[str, Union[str, None]]):
         self._check()
 
         if self.exists(ibname):
             raise KeyError(f'vrd file "{ibname}" exists')
-        vrd_params = {
+        vrd_params: Dict[str, str] = {
             'ibname': ibname
         }
         vrd_params.update(params)
         env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
         template = env.get_template('vrd.xml')
 
-        vrd_data = template.render(ctx=vrd_params)
+        vrd_data: str = template.render(ctx=vrd_params)
         with open(self.filename(ibname), "w") as f:
             f.write(vrd_data)
 
-    def remove(self, ibname):
+    def remove(self, ibname: str):
         self._check()
 
         if not self.exists(ibname):
@@ -67,8 +67,8 @@ class ApacheConfig:
     end_tag: str = '# --- W31C PUBLICATION END:'
 
     def __init__(self, filename: str, vrd_path: str):
-        self.filename = filename
-        self.vrd_path = vrd_path
+        self.filename: str = filename
+        self.vrd_path: str = vrd_path
 
     def is_valid(self) -> bool:
         return os.path.exists(self.filename)
@@ -81,9 +81,8 @@ class ApacheConfig:
     def text(self) -> str:
         self._check()
 
-        txt: str = ''
         with open(self.filename, 'r') as f:
-            txt = f.read()
+            txt: str = f.read()
         return txt
 
     def has_1cws_module(self) -> bool:
@@ -117,11 +116,11 @@ class ApacheConfig:
 
         env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
         template = env.get_template('apache_pub.cfg')
-        pub_params = {
+        pub_params: Dict[str, str] = {
             'vrd_filename': os.path.join(self.vrd_path, f'{ibname}.vrd'),
             'ibname': ibname
         }
-        pub = template.render(ctx=pub_params)
+        pub: str = template.render(ctx=pub_params)
 
         with open(self.filename, "a") as f:
             f.write(f'\n{ApacheConfig.start_tag} {ibname}\n')
@@ -146,11 +145,11 @@ class ApacheConfig:
                     is_pub_started = True
                     continue
                 f.write(line)
-        return
 
 
 class Commands:
     """1C: Enterprice infobase web publication tool."""
+    _config: Dict[str, Union[str, Dict[str, Union[str, None]]]]
 
     def __init__(self, config='w31c.yml', verbose=False):
         level = logging.INFO if verbose else logging.WARNING
@@ -187,11 +186,10 @@ class Commands:
         """ Check config """
 
         print('config: {}'.format(self._config))
-        apache_cfg_valid = self._apache_cfg.is_valid()
+        apache_cfg_valid: bool = self._apache_cfg.is_valid()
         print('apache cfg is {}'.format('valid' if apache_cfg_valid else 'invalid'))
-        return
 
-    def add(self, ibname):
+    def add(self, ibname: str):
         """ Add new publication """
 
         self._apache_cfg.add_publication(ibname)
@@ -202,7 +200,7 @@ class Commands:
 
         self._log.info(f'publication added: {ibname}')
 
-    def remove(self, ibname):
+    def remove(self, ibname: str):
         """ Remove publication """
 
         self._apache_cfg.remove_publication(ibname)
@@ -211,6 +209,7 @@ class Commands:
         else:
             self._log.warning(f'vrd file for {ibname} not found')
         self._log.info(f'publication removed: {ibname}')
+
 
 if __name__ == "__main__":
     fire.Fire(Commands)
