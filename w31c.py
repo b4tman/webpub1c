@@ -8,6 +8,7 @@ import os
 import re
 import glob
 
+
 class VrdManager:
     def __init__(self, path: str):
         self.path = path
@@ -107,7 +108,7 @@ class ApacheConfig:
         with open(self.filename, "a") as f:
             f.write(f'\n{ApacheConfig.start_tag} {ibname}\n')
             f.write(pub)
-            f.write(f'\n{ApacheConfig.end_tag} {ibname}\n')
+            f.write(f'\n{ApacheConfig.end_tag} {ibname}')
 
     def remove_publication(self, ibname: str):
         if not self.is_publicated(ibname):
@@ -116,7 +117,7 @@ class ApacheConfig:
         start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
         end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
         lines: List[str] = []
-        skip_flag: bool = False
+        is_pub_started: bool = False
         with open(self.filename, "r+") as f:
             for line in f:
                 lines.append(line)
@@ -125,12 +126,12 @@ class ApacheConfig:
             f.truncate()
 
             for line in lines:
-                if skip_flag:
+                if is_pub_started:
                     if end_pub.match(line):
-                        skip_flag = False
+                        is_pub_started = False
                     continue
                 if start_pub.match(line):
-                    skip_flag = True
+                    is_pub_started = True
                     continue
                 f.write(line)
         return
@@ -142,7 +143,8 @@ class Commands:
     def __init__(self, config='w31c.yml', verbose=False):
         level = logging.INFO if verbose else logging.WARNING
         logging.basicConfig(level=level)
-        logging.getLogger("w31c").setLevel(level)
+        self.log = logging.getLogger("w31c")
+        self.log.setLevel(level)
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
             self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
@@ -150,7 +152,8 @@ class Commands:
 
     def list(self):
         """ List publications """
-        print(self._vrdmgr.files)
+
+        self.log.info('vrds: %s', ', '.join(self._vrdmgr.files))
         return self._apache_cfg.publications
 
     def check(self):
@@ -163,18 +166,24 @@ class Commands:
 
     def add(self, ibname):
         """ Add new publication """
+
         self._apache_cfg.add_publication(ibname)
-        print(f'publication added: {ibname}')
+        if self._vrdmgr.exists(ibname):
+            self.log.warning(f'vrd file for {ibname} exists')
+        else:
+            self._vrdmgr.add(ibname, self._config['vrd_params'])
+
+        self.log.info(f'publication added: {ibname}')
 
     def remove(self, ibname):
         """ Remove publication """
+
         self._apache_cfg.remove_publication(ibname)
-        print(f'publication removed: {ibname}')
-
-
-def main(args=None):
-    fire.Fire(Commands, command=args)
-
+        if self._vrdmgr.exists(ibname):
+            self._vrdmgr.remove(ibname)
+        else:
+            self.log.warning(f'vrd file for {ibname} not found')
+        self.log.info(f'publication removed: {ibname}')
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(Commands)
