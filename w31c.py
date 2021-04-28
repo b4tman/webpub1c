@@ -78,15 +78,33 @@ class ApacheConfig:
             raise ValueError('invalid apache config')
 
     @property
-    def publications(self) -> List[str]:
+    def text(self) -> str:
         self._check()
 
-        result: List[str] = []
-        start_expr = re.compile('^{}\\s([^\\s]*)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
+        txt: str = ''
         with open(self.filename, 'r') as f:
             txt = f.read()
-            for match in start_expr.finditer(txt):
-                result.append(match.group(1))
+        return txt
+
+    def has_1cws_module(self) -> bool:
+        ws_expr = re.compile('^LoadModule\\s_1cws_module\\s[^\\s]*$', re.M)
+        result: bool = (ws_expr.search(self.text) is not None)
+
+        return result
+
+    def add_1cws_module(self, module_filename: str):
+        if self.has_1cws_module():
+            return
+
+        with open(self.filename, "a") as f:
+            f.write(f'\nLoadModule _1cws_module "{module_filename}"\n')
+
+    @property
+    def publications(self) -> List[str]:
+        result: List[str] = []
+        start_expr = re.compile('^{}\\s([^\\s]*)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
+        for match in start_expr.finditer(self.text):
+            result.append(match.group(1))
 
         return result
 
@@ -116,15 +134,9 @@ class ApacheConfig:
 
         start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
         end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
-        lines: List[str] = []
         is_pub_started: bool = False
-        with open(self.filename, "r+") as f:
-            for line in f:
-                lines.append(line)
-
-            f.seek(0)
-            f.truncate()
-
+        lines: List[str] = self.text.splitlines()
+        with open(self.filename, "w") as f:
             for line in lines:
                 if is_pub_started:
                     if end_pub.match(line):
@@ -143,18 +155,33 @@ class Commands:
     def __init__(self, config='w31c.yml', verbose=False):
         level = logging.INFO if verbose else logging.WARNING
         logging.basicConfig(level=level)
-        self.log = logging.getLogger("w31c")
-        self.log.setLevel(level)
+        self._log = logging.getLogger("w31c")
+        self._log.setLevel(level)
+
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
-            self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
-            self._vrdmgr = VrdManager(self._config['vrd_path'])
+        self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
+        self._vrdmgr = VrdManager(self._config['vrd_path'])
 
     def list(self):
         """ List publications """
 
-        self.log.info('vrds: %s', ', '.join(self._vrdmgr.files))
+        self._log.info('vrds: %s', ', '.join(self._vrdmgr.files))
         return self._apache_cfg.publications
+
+    def has_module(self) -> bool:
+        """ Ensure apache config has 1cws module """
+
+        return self._apache_cfg.has_1cws_module()
+
+    def add_module(self):
+        """ Add 1cws module to apache config """
+
+        if self._apache_cfg.has_1cws_module():
+            self._log.info('config unchanged')
+        else:
+            self._apache_cfg.add_1cws_module(os.path.join(self._config['platform_path'], self._config['ws_module']))
+            self._log.info('module added')
 
     def check(self):
         """ Check config """
@@ -169,11 +196,11 @@ class Commands:
 
         self._apache_cfg.add_publication(ibname)
         if self._vrdmgr.exists(ibname):
-            self.log.warning(f'vrd file for {ibname} exists')
+            self._log.warning(f'vrd file for {ibname} exists')
         else:
             self._vrdmgr.add(ibname, self._config['vrd_params'])
 
-        self.log.info(f'publication added: {ibname}')
+        self._log.info(f'publication added: {ibname}')
 
     def remove(self, ibname):
         """ Remove publication """
@@ -182,8 +209,8 @@ class Commands:
         if self._vrdmgr.exists(ibname):
             self._vrdmgr.remove(ibname)
         else:
-            self.log.warning(f'vrd file for {ibname} not found')
-        self.log.info(f'publication removed: {ibname}')
+            self._log.warning(f'vrd file for {ibname} not found')
+        self._log.info(f'publication removed: {ibname}')
 
 if __name__ == "__main__":
     fire.Fire(Commands)

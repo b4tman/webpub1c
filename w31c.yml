@@ -1,6 +1,7 @@
 apache_config: test/apache.cfg
 vrd_path: test/vrds
 platform_path: /opt/1C/x86_64/current
+ws_module: wsap24.so
 vrd_params:
   debug: false
   server_addr: localhost
