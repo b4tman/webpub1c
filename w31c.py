@@ -1,15 +1,18 @@
 import glob
 import logging
 import os
+import pprint
 import re
 from typing import List, Dict, Union
 
 import fire
 import jinja2
 import yaml
-import pprint
+
 
 class DirectoryManager:
+    """ manage publication directories """
+
     def __init__(self, path: str):
         self.path: str = path
 
@@ -53,6 +56,13 @@ class DirectoryManager:
 
 
 class VrdManager:
+    """ manage vrd files """
+
+    _xml_esc = str.maketrans({
+        "&": "&amp;", '"': "&quot;", "'": "&apos;",
+        "<": "&lt;", ">": "&gt;",
+    })
+
     def __init__(self, path: str, url_base: str):
         self.path: str = path
         self.url_base: str = url_base
@@ -68,6 +78,10 @@ class VrdManager:
 
     def _url_path(self, ibname: str):
         return self.url_base + ibname
+
+    @staticmethod
+    def _xml_escape(txt: str):
+        return txt.translate(VrdManager._xml_esc)
 
     @property
     def files(self) -> List[str]:
@@ -91,8 +105,8 @@ class VrdManager:
         if self.exists(ibname):
             raise KeyError(f'vrd file "{ibname}" exists')
         vrd_params: Dict[str, str] = {
-            'url_path': self._url_path(ibname),
-            'ibname': ibname
+            'url_path': VrdManager._xml_escape(self._url_path(ibname)),
+            'ibname': VrdManager._xml_escape(ibname)
         }
         vrd_params.update(params)
         env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
@@ -241,7 +255,8 @@ class Commands:
         if self._apache_cfg.has_1cws_module():
             self._log.info('config unchanged')
         else:
-            self._apache_cfg.add_1cws_module(os.path.join(self._config['platform_path'], self._config['ws_module']))
+            module: str = os.path.join(self._config['platform_path'], self._config['ws_module'])
+            self._apache_cfg.add_1cws_module(module)
             self._log.info('module added')
 
     def check(self):
@@ -249,9 +264,9 @@ class Commands:
 
         print('config:')
         pprint.pprint(self._config, indent=2)
-        print('apache cfg is {}'.format('valid' if self._apache_cfg.is_valid() else 'invalid'))
-        print('vrd path is {}'.format('valid' if self._vrdmgr.is_valid() else 'invalid'))
-        print('dir path is {}'.format('valid' if self._dirmgr.is_valid() else 'invalid'))
+        print('apache cfg is {}'.format('ok' if self._apache_cfg.is_valid() else 'invalid'))
+        print('vrd path is {}'.format('ok' if self._vrdmgr.is_valid() else 'invalid'))
+        print('dir path is {}'.format('ok' if self._dirmgr.is_valid() else 'invalid'))
 
     def add(self, ibname: str):
         """ Add new publication """
