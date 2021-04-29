@@ -99,7 +99,7 @@ class ApacheConfig:
         return txt
 
     def has_1cws_module(self) -> bool:
-        ws_expr = re.compile('^LoadModule\\s_1cws_module\\s[^\\s]*$', re.M)
+        ws_expr = re.compile('^LoadModule\\s_1cws_module\\s.*$', re.M)
         result: bool = (ws_expr.search(self.text) is not None)
 
         return result
