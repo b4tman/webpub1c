@@ -7,6 +7,49 @@ from typing import List, Dict, Union
 import fire
 import jinja2
 import yaml
+import pprint
+
+class DirectoryManager:
+    def __init__(self, path: str):
+        self.path: str = path
+
+    def is_valid(self) -> bool:
+        return os.path.isdir(self.path)
+
+    def _check(self):
+        if not self.is_valid():
+            raise ValueError('invalid dir path')
+
+    @property
+    def list(self) -> List[str]:
+        self._check()
+
+        result: List[str] = []
+        entry: os.DirEntry
+        for entry in os.scandir(self.path):
+            if entry.is_dir():
+                result.append(entry.name)
+        return result
+
+    def path_of(self, ibname: str) -> str:
+        return os.path.join(self.path, ibname)
+
+    def exists(self, ibname: str) -> bool:
+        return os.path.isdir(self.path_of(ibname))
+
+    def add(self, ibname: str):
+        self._check()
+
+        if self.exists(ibname):
+            raise KeyError(f'dir for "{ibname}" exists')
+        os.mkdir(self.path_of(ibname))
+
+    def remove(self, ibname: str):
+        self._check()
+
+        if not self.exists(ibname):
+            raise KeyError(f'dir for "{ibname}" not found')
+        os.rmdir(self.path_of(ibname))
 
 
 class VrdManager:
@@ -73,9 +116,10 @@ class ApacheConfig:
     start_tag: str = '# --- W31C PUBLICATION START:'
     end_tag: str = '# --- W31C PUBLICATION END:'
 
-    def __init__(self, filename: str, vrd_path: str, url_base: str):
+    def __init__(self, filename: str, vrd_path: str, dir_path: str, url_base: str):
         self.filename: str = filename
         self.vrd_path: str = vrd_path
+        self.dir_path: str = dir_path
         self.url_base: str = url_base
         if not self.url_base.endswith('/'):
             self.url_base += '/'
@@ -130,6 +174,7 @@ class ApacheConfig:
         env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
         template = env.get_template('apache_pub.cfg')
         pub_params: Dict[str, str] = {
+            'directory': os.path.join(self.dir_path, ibname),
             'vrd_filename': os.path.join(self.vrd_path, f'{ibname}.vrd'),
             'url_path': self._url_path(ibname),
             'ibname': ibname
@@ -174,13 +219,15 @@ class Commands:
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
         self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'],
-                                        self._config['url_base'])
+                                        self._config['dir_path'], self._config['url_base'])
         self._vrdmgr = VrdManager(self._config['vrd_path'], self._config['url_base'])
+        self._dirmgr = DirectoryManager(self._config['dir_path'])
 
     def list(self):
         """ List publications """
 
         self._log.info('vrds: %s', ', '.join(self._vrdmgr.files))
+        self._log.info('dirs: %s', ', '.join(self._dirmgr.list))
         return self._apache_cfg.publications
 
     def has_module(self) -> bool:
@@ -200,29 +247,46 @@ class Commands:
     def check(self):
         """ Check config """
 
-        print('config: {}'.format(self._config))
-        apache_cfg_valid: bool = self._apache_cfg.is_valid()
-        print('apache cfg is {}'.format('valid' if apache_cfg_valid else 'invalid'))
+        print('config:')
+        pprint.pprint(self._config, indent=2)
+        print('apache cfg is {}'.format('valid' if self._apache_cfg.is_valid() else 'invalid'))
+        print('vrd path is {}'.format('valid' if self._vrdmgr.is_valid() else 'invalid'))
+        print('dir path is {}'.format('valid' if self._dirmgr.is_valid() else 'invalid'))
 
     def add(self, ibname: str):
         """ Add new publication """
 
+        # cfg
         self._apache_cfg.add_publication(ibname)
+        # vrd
         if self._vrdmgr.exists(ibname):
             self._log.warning(f'vrd file for {ibname} exists')
         else:
             self._vrdmgr.add(ibname, self._config['vrd_params'])
+        # dir
+        if self._dirmgr.exists(ibname):
+            self._log.warning(f'dir for {ibname} exists')
+        else:
+            self._dirmgr.add(ibname)
 
         self._log.info(f'publication added: {ibname}')
 
     def remove(self, ibname: str):
         """ Remove publication """
 
+        # cfg
         self._apache_cfg.remove_publication(ibname)
+        # vrd
         if self._vrdmgr.exists(ibname):
             self._vrdmgr.remove(ibname)
         else:
             self._log.warning(f'vrd file for {ibname} not found')
+        # dir
+        if self._dirmgr.exists(ibname):
+            self._dirmgr.remove(ibname)
+        else:
+            self._log.warning(f'dir for {ibname} not found')
+
         self._log.info(f'publication removed: {ibname}')
 
 
