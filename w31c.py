@@ -17,7 +17,7 @@ class VrdManager:
             self.url_base += '/'
 
     def is_valid(self) -> bool:
-        return os.path.exists(self.path)
+        return os.path.isdir(self.path)
 
     def _check(self):
         if not self.is_valid():
