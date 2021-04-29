@@ -10,8 +10,11 @@ import yaml
 
 
 class VrdManager:
-    def __init__(self, path: str):
+    def __init__(self, path: str, url_base: str):
         self.path: str = path
+        self.url_base: str = url_base
+        if not self.url_base.endswith('/'):
+            self.url_base += '/'
 
     def is_valid(self) -> bool:
         return os.path.exists(self.path)
@@ -19,6 +22,9 @@ class VrdManager:
     def _check(self):
         if not self.is_valid():
             raise ValueError('invalid vrd path')
+
+    def _url_path(self, ibname: str):
+        return self.url_base + ibname
 
     @property
     def files(self) -> List[str]:
@@ -42,6 +48,7 @@ class VrdManager:
         if self.exists(ibname):
             raise KeyError(f'vrd file "{ibname}" exists')
         vrd_params: Dict[str, str] = {
+            'url_path': self._url_path(ibname),
             'ibname': ibname
         }
         vrd_params.update(params)
@@ -66,9 +73,12 @@ class ApacheConfig:
     start_tag: str = '# --- W31C PUBLICATION START:'
     end_tag: str = '# --- W31C PUBLICATION END:'
 
-    def __init__(self, filename: str, vrd_path: str):
+    def __init__(self, filename: str, vrd_path: str, url_base: str):
         self.filename: str = filename
         self.vrd_path: str = vrd_path
+        self.url_base: str = url_base
+        if not self.url_base.endswith('/'):
+            self.url_base += '/'
 
     def is_valid(self) -> bool:
         return os.path.exists(self.filename)
@@ -76,6 +86,9 @@ class ApacheConfig:
     def _check(self):
         if not self.is_valid():
             raise ValueError('invalid apache config')
+
+    def _url_path(self, ibname: str):
+        return self.url_base + ibname
 
     @property
     def text(self) -> str:
@@ -118,6 +131,7 @@ class ApacheConfig:
         template = env.get_template('apache_pub.cfg')
         pub_params: Dict[str, str] = {
             'vrd_filename': os.path.join(self.vrd_path, f'{ibname}.vrd'),
+            'url_path': self._url_path(ibname),
             'ibname': ibname
         }
         pub: str = template.render(ctx=pub_params)
@@ -134,7 +148,7 @@ class ApacheConfig:
         start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
         end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
         is_pub_started: bool = False
-        lines: List[str] = self.text.splitlines()
+        lines: List[str] = self.text.splitlines(keepends=True)
         with open(self.filename, "w") as f:
             for line in lines:
                 if is_pub_started:
@@ -159,8 +173,9 @@ class Commands:
 
         with open(config, 'r') as cfg_file:
             self._config = yaml.safe_load(cfg_file)
-        self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'])
-        self._vrdmgr = VrdManager(self._config['vrd_path'])
+        self._apache_cfg = ApacheConfig(self._config['apache_config'], self._config['vrd_path'],
+                                        self._config['url_base'])
+        self._vrdmgr = VrdManager(self._config['vrd_path'], self._config['url_base'])
 
     def list(self):
         """ List publications """

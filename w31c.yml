@@ -1,5 +1,6 @@
 apache_config: test/apache.cfg
 vrd_path: test/vrds
+url_base: /1c
 platform_path: /opt/1C/x86_64/current
 ws_module: wsap24.so
 vrd_params:
