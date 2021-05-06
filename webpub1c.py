@@ -306,7 +306,7 @@ class ApacheConfig:
 
 
 class Commands:
-    """ 1C: Enterprice infobase web publication tool. """
+    """ 1C: Enterprise infobase web publication tool. """
     _config: Dict[str, Union[str, Dict[str, Union[str, None]]]]
 
     def __init__(self, config: str = 'webpub1c.yml', verbose: bool = False):
