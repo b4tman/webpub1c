@@ -358,10 +358,10 @@ class Commands:
         print('  url base: {}'.format('ok' if self._is_url_base_valid() else 'invalid'))
         print(' ws module: {}'.format('ok' if self._is_module_valid() else 'not found'))
 
-    def has_module(self) -> bool:
+    def has_module(self):
         """ Ensure apache config has 1cws module """
 
-        return self._apache_cfg.has_1cws_module()
+        print(self._apache_cfg.has_1cws_module())
 
     def add_module(self):
         """ Add 1cws module to apache config """
@@ -390,14 +390,12 @@ class Commands:
         """ Add new publication """
 
         self._apache_cfg.add_publication(ibname)
-
         self._log.info(f'publication added: {ibname}')
 
     def remove(self, ibname: str):
         """ Remove publication """
 
         self._apache_cfg.remove_publication(ibname)
-
         self._log.info(f'publication removed: {ibname}')
 
 
