@@ -19,6 +19,8 @@ _xml_esc = str.maketrans({
     "<": "&lt;", ">": "&gt;",
 })
 
+files_encoding: str = 'utf-8'
+
 
 def xml_escape(txt: str) -> str:
     return txt.translate(_xml_esc)
@@ -154,7 +156,7 @@ class WebPublication:
         template = env.get_template('vrd.xml')
 
         vrd_data: str = template.render(ctx=vrd_params)
-        with open(self.vrd_filename, "w", encoding='utf-8') as f:
+        with open(self.vrd_filename, "w", encoding=files_encoding) as f:
             f.write(vrd_data)
 
     def remove_vrd(self):
@@ -204,7 +206,7 @@ class ApacheConfig:
     def text(self) -> str:
         self._check()
 
-        with open(self.filename, 'r', encoding='utf-8') as f:
+        with open(self.filename, 'r', encoding=files_encoding) as f:
             txt: str = f.read()
         return txt
 
@@ -218,7 +220,7 @@ class ApacheConfig:
         if self.has_1cws_module():
             return
 
-        with open(self.filename, "a") as f:
+        with open(self.filename, "a", encoding=files_encoding) as f:
             f.write(f'\nLoadModule _1cws_module "{module_filename}"\n')
 
     @property
@@ -241,7 +243,7 @@ class ApacheConfig:
 
         publication.create()
         pub_cfg = publication.to_config()
-        with open(self.filename, "a", encoding='utf-8') as f:
+        with open(self.filename, "a", encoding=files_encoding) as f:
             f.write(f'\n{ApacheConfig.start_tag} {ibname}\n')
             f.write(pub_cfg)
             f.write(f'\n{ApacheConfig.end_tag} {ibname}')
@@ -301,7 +303,7 @@ class ApacheConfig:
         publication.remove()
 
         # write new config
-        with open(self.filename, "w", encoding='utf-8') as f:
+        with open(self.filename, "w", encoding=files_encoding) as f:
             f.write(''.join(new_lines))
 
 
@@ -315,7 +317,7 @@ class Commands:
         self._log = logging.getLogger("w31c")
         self._log.setLevel(level)
 
-        with open(config, 'r') as cfg_file:
+        with open(config, 'r', encoding=files_encoding) as cfg_file:
             self._config = yaml.safe_load(cfg_file)
 
         vrd_params: Optional[Dict[str, Union[str, None]]] = self._config.get('vrd_params', None)
