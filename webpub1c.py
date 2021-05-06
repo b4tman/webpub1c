@@ -56,9 +56,9 @@ class WebPublication:
     def from_config(name: str, config: str):
         """ read publication info from config block """
 
-        url_expr = re.compile('Alias\\s"([^"]+)"')
-        dir_expr = re.compile('<Directory\\s"([^"]+)">')
-        vrd_expr = re.compile('ManagedApplicationDescriptor\\s"([^"]+)"')
+        url_expr = re.compile(r'Alias\s"([^"]+)"')
+        dir_expr = re.compile(r'<Directory\s"([^"]+)">')
+        vrd_expr = re.compile(r'ManagedApplicationDescriptor\s"([^"]+)"')
 
         url_match = url_expr.search(config)
         dir_match = dir_expr.search(config)
@@ -211,7 +211,7 @@ class ApacheConfig:
         return txt
 
     def has_1cws_module(self) -> bool:
-        ws_expr = re.compile('^LoadModule\\s_1cws_module\\s.*$', re.M)
+        ws_expr = re.compile(r'^LoadModule\s_1cws_module\s.*$', re.M)
         result: bool = (ws_expr.search(self.text) is not None)
 
         return result
@@ -225,7 +225,7 @@ class ApacheConfig:
 
     @property
     def publications(self) -> Iterable[str]:
-        start_expr = re.compile('^{}\\s(.+)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
+        start_expr = re.compile(r'^{}\s(.+)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
         for match in start_expr.finditer(self.text):
             yield match.group(1).strip()
 
@@ -252,8 +252,8 @@ class ApacheConfig:
         if not self.is_publicated(ibname):
             return None
 
-        start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
-        end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
+        start_pub = re.compile(r'^{}\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
+        end_pub = re.compile(r'^{}\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
 
         is_pub_started: bool = False
         pub_lines: List[str] = []
@@ -278,8 +278,8 @@ class ApacheConfig:
         if not self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" not publicated')
 
-        start_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
-        end_pub = re.compile('^{}\\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
+        start_pub = re.compile(r'^{}\s{}'.format(re.escape(ApacheConfig.start_tag), re.escape(ibname)))
+        end_pub = re.compile(r'^{}\s{}'.format(re.escape(ApacheConfig.end_tag), re.escape(ibname)))
         is_pub_started: bool = False
 
         # filter lines for new config and publication
