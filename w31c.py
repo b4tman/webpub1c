@@ -224,7 +224,7 @@ class Commands:
     """1C: Enterprice infobase web publication tool."""
     _config: Dict[str, Union[str, Dict[str, Union[str, None]]]]
 
-    def __init__(self, config='w31c.yml', verbose=False):
+    def __init__(self, config: str = 'w31c.yml', verbose: bool = False):
         level = logging.INFO if verbose else logging.WARNING
         logging.basicConfig(level=level)
         self._log = logging.getLogger("w31c")
