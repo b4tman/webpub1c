@@ -172,8 +172,8 @@ class WebPublication:
     def remove(self):
         """ remove all """
 
-        self.remove_directory()
         self.remove_vrd()
+        self.remove_directory()
 
 
 class ApacheConfig:
