@@ -181,8 +181,8 @@ class WebPublication:
 class ApacheConfig:
     """ apache config """
 
-    start_tag: str = '# --- W31C PUBLICATION START:'
-    end_tag: str = '# --- W31C PUBLICATION END:'
+    start_tag: str = '# --- WEBPUB1C PUBLICATION START:'
+    end_tag: str = '# --- WEBPUB1C PUBLICATION END:'
 
     def __init__(self, filename: str,
                  vrd_path: str,
@@ -314,7 +314,7 @@ class Commands:
     def __init__(self, config: str = 'webpub1c.yml', verbose: bool = False):
         level = logging.INFO if verbose else logging.WARNING
         logging.basicConfig(level=level)
-        self._log = logging.getLogger("w31c")
+        self._log = logging.getLogger("webpub1c")
         self._log.setLevel(level)
 
         with open(config, 'r', encoding=files_encoding) as cfg_file:
