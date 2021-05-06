@@ -1,16 +1,18 @@
-import glob
+#!/usr/bin/env python3
+
+
 import logging
 import os
 import pprint
 import re
 import unicodedata
 from typing import List, Dict, Union, Optional, Iterable
-from transliterate import translit
 
 import fire
 import jinja2
 import yaml
 from pathvalidate import is_valid_filepath, sanitize_filename
+from transliterate import translit
 
 _xml_esc = str.maketrans({
     "&": "&amp;", '"': "&quot;", "'": "&apos;",
@@ -31,6 +33,8 @@ def slugify(value: str, lang: str = 'ru') -> str:
 
 
 class WebPublication:
+    """ 1c web publication info for apache2 config """
+
     def __init__(self, name: str,
                  directory: str = '',
                  vrd_filename: str = '',
@@ -48,6 +52,8 @@ class WebPublication:
 
     @staticmethod
     def from_config(name: str, config: str):
+        """ read publication info from config block """
+
         url_expr = re.compile('Alias\\s"([^"]+)"')
         dir_expr = re.compile('<Directory\\s"([^"]+)">')
         vrd_expr = re.compile('ManagedApplicationDescriptor\\s"([^"]+)"')
@@ -62,6 +68,8 @@ class WebPublication:
         return WebPublication(name, _dir, _vrd, _url)
 
     def to_config(self) -> str:
+        """ get config block from publication info """
+
         env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
         template = env.get_template('apache_pub.cfg')
         pub_params: Dict[str, str] = {
@@ -73,6 +81,8 @@ class WebPublication:
         return template.render(ctx=pub_params)
 
     def describe(self) -> str:
+        """ describe publication info"""
+
         return pprint.pformat({
             'name': self.name,
             'url_path': self.url_path,
@@ -81,6 +91,8 @@ class WebPublication:
         }, 2)
 
     def generate_paths(self, dir_prefix: str, vrd_prefix: str, url_prefix: str):
+        """ generate directory path, vrd filepath, url for named publication """
+
         if not os.path.isdir(dir_prefix):
             raise ValueError(f'pub dir not found: {dir_prefix}')
         if not os.path.isdir(vrd_prefix):
@@ -98,18 +110,24 @@ class WebPublication:
         self.url_path = url_prefix + safe_name_url
 
     def is_valid(self) -> bool:
+        """ is directory path, vrd filepath, url, name valid """
+
         return is_valid_filepath(self.directory) and \
                is_valid_filepath(self.vrd_filename) and \
                is_valid_filepath(self.url_path, platform='posix') and \
-               not '' == self.name
+               '' != self.name
 
     def is_ok_to_create(self) -> bool:
+        """ can create directory, vrd file """
+
         return self.is_valid() and not (
                 os.path.exists(self.directory) or
                 os.path.exists(self.vrd_filename)
         )
 
     def is_exist(self) -> bool:
+        """ directory and vrd file exists """
+
         return os.path.isdir(self.directory) and \
                os.path.exists(self.vrd_filename)
 
@@ -144,12 +162,16 @@ class WebPublication:
             os.unlink(self.vrd_filename)
 
     def create(self):
+        """ create all """
+
         if not self.is_ok_to_create():
             raise ValueError(f'can\'t create pub: {self.name}')
         self.create_directory()
         self.create_vrd()
 
     def remove(self):
+        """ remove all """
+
         self.remove_directory()
         self.remove_vrd()
 
@@ -284,7 +306,7 @@ class ApacheConfig:
 
 
 class Commands:
-    """1C: Enterprice infobase web publication tool."""
+    """ 1C: Enterprice infobase web publication tool. """
     _config: Dict[str, Union[str, Dict[str, Union[str, None]]]]
 
     def __init__(self, config: str = 'w31c.yml', verbose: bool = False):
