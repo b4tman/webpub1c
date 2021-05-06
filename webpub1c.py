@@ -259,7 +259,7 @@ class ApacheConfig:
         for line in lines:
             if is_pub_started:
                 if end_pub.match(line):
-                    is_pub_started = False
+                    break
                 else:
                     pub_lines.append(line)
                 continue
