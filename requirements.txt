@@ -1,3 +1,5 @@
 jinja2==2.11.3
 fire==0.4.0
 PyYAML==5.4.1
+pathvalidate==2.4.1
+transliterate==1.10.2
