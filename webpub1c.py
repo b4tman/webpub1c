@@ -6,13 +6,16 @@ import os
 import pprint
 import re
 import unicodedata
-from typing import List, Dict, Union, Optional, Iterable
+from typing import List, Dict, Union, Optional, Iterator
 
 import fire
 import jinja2
 import yaml
 from pathvalidate import is_valid_filepath, sanitize_filename
 from transliterate import translit
+
+DictConfig = Dict[str, Union[str, 'DictConfig', None]]
+VRDConfig = Dict[str, Union[str, None]]
 
 _xml_esc = str.maketrans({
     "&": "&amp;", '"': "&quot;", "'": "&apos;",
@@ -41,19 +44,19 @@ class WebPublication:
                  directory: str = '',
                  vrd_filename: str = '',
                  url_path: str = '',
-                 vrd_params: Optional[Dict[str, Union[str, None]]] = None):
+                 vrd_params: Optional[VRDConfig] = None):
         if '' == name:
             raise ValueError('publication name empty')
         self.name: str = name
         self.directory: str = directory
         self.vrd_filename: str = vrd_filename
         self.url_path: str = url_path
-        self.vrd_params: Dict[str, str] = {}
+        self.vrd_params: VRDConfig = {}
         if vrd_params is not None:
             self.vrd_params = vrd_params
 
     @staticmethod
-    def from_config(name: str, config: str):
+    def from_config(name: str, config: str) -> 'WebPublication':
         """ read publication info from config block """
 
         url_expr = re.compile(r'Alias\s"([^"]+)"')
@@ -147,7 +150,7 @@ class WebPublication:
         if os.path.exists(self.vrd_filename):
             raise ValueError(f'vrd file "{self.vrd_filename}" exists')
 
-        vrd_params: Dict[str, str] = {
+        vrd_params: VRDConfig = {
             'url_path': xml_escape(self.url_path),
             'ibname': xml_escape(self.name)
         }
@@ -188,12 +191,12 @@ class ApacheConfig:
                  vrd_path: str,
                  dir_path: str,
                  url_base: str,
-                 vrd_params: Optional[Dict[str, Union[str, None]]] = None):
+                 vrd_params: Optional[VRDConfig] = None):
         self.filename: str = filename
         self.vrd_path: str = vrd_path
         self.dir_path: str = dir_path
         self.url_base: str = url_base
-        self.vrd_params: Optional[Dict[str, Union[str, None]]] = vrd_params
+        self.vrd_params: Optional[VRDConfig] = vrd_params
 
     def is_valid(self) -> bool:
         return os.path.isfile(self.filename)
@@ -224,7 +227,7 @@ class ApacheConfig:
             f.write(f'\nLoadModule _1cws_module "{module_filename}"\n')
 
     @property
-    def publications(self) -> Iterable[str]:
+    def publications(self) -> Iterator[str]:
         start_expr = re.compile(r'^{}\s(.+)$'.format(re.escape(ApacheConfig.start_tag)), re.M)
         for match in start_expr.finditer(self.text):
             yield match.group(1).strip()
@@ -309,7 +312,6 @@ class ApacheConfig:
 
 class Commands:
     """ 1C: Enterprise infobase web publication tool. """
-    _config: Dict[str, Union[str, Dict[str, Union[str, None]]]]
 
     def __init__(self, config: str = 'webpub1c.yml', verbose: bool = False):
         level = logging.INFO if verbose else logging.WARNING
@@ -318,9 +320,9 @@ class Commands:
         self._log.setLevel(level)
 
         with open(config, 'r', encoding=files_encoding) as cfg_file:
-            self._config = yaml.safe_load(cfg_file)
+            self._config: DictConfig = yaml.safe_load(cfg_file)
 
-        vrd_params: Optional[Dict[str, Union[str, None]]] = self._config.get('vrd_params', None)
+        vrd_params: Optional[VRDConfig] = self._config.get('vrd_params', None)
         apache_config: str = self._config.get('apache_config', '')
         self._vrd_path: str = self._config.get('vrd_path', '')
         self._dir_path: str = self._config.get('dir_path', '')
