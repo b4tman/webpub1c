@@ -108,7 +108,7 @@ class WebPublication:
             url_prefix = url_prefix + '/'
 
         slug_name = slugify(self.name)
-        safe_name = sanitize_filename(slug_name)
+        safe_name = sanitize_filename(slug_name, platform='auto')
         safe_name_url = sanitize_filename(slug_name, platform='posix')
         self.directory = os.path.join(dir_prefix, safe_name)
         self.vrd_filename = os.path.join(vrd_prefix, f'{safe_name}.vrd')
@@ -117,8 +117,8 @@ class WebPublication:
     def is_valid(self) -> bool:
         """ is directory path, vrd filepath, url, name valid """
 
-        return is_valid_filepath(self.directory) and \
-               is_valid_filepath(self.vrd_filename) and \
+        return is_valid_filepath(self.directory, platform='auto') and \
+               is_valid_filepath(self.vrd_filename, platform='auto') and \
                is_valid_filepath(self.url_path, platform='posix') and \
                '' != self.name
 
