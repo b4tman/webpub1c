@@ -37,6 +37,13 @@ def slugify(value: str, lang: str = 'ru') -> str:
     return re.sub(r'[-\s]+', '-', value).strip('-_')
 
 
+def urlpath_join(prefix: str, url_path: str) -> str:
+    if not prefix.endswith('/'):
+        prefix += '/'
+    if not url_path.startswith(prefix):
+        url_path = prefix + url_path
+    return url_path
+
 class WebPublication:
     """ 1c web publication info for apache2 config """
 
@@ -120,6 +127,7 @@ class WebPublication:
         return is_valid_filepath(self.directory, platform='auto') and \
                is_valid_filepath(self.vrd_filename, platform='auto') and \
                is_valid_filepath(self.url_path, platform='posix') and \
+               self.url_path.startswith('/') and \
                '' != self.name
 
     def is_ok_to_create(self) -> bool:
@@ -235,21 +243,31 @@ class ApacheConfig:
     def is_publicated(self, ibname: str) -> bool:
         return ibname in self.publications
 
-    def add_publication(self, ibname: str):
+    def create_publication(self, ibname: str, url_path: Optional[str] = None) -> WebPublication:
         if self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" already publicated')
 
         publication = WebPublication(ibname, vrd_params=self.vrd_params)
         publication.generate_paths(self.dir_path, self.vrd_path, self.url_base)
+
+        if url_path is not None:
+            publication.url_path = urlpath_join(self.url_base, url_path)
+
         if not publication.is_ok_to_create():
             raise ValueError(f'can\'t create publication: {publication.describe()}')
 
         publication.create()
+        return publication
+
+    def add_publication(self, publication: WebPublication) -> None:
+        if self.is_publicated(publication.name):
+            raise KeyError(f'infobase "{publication.name}" already publicated')
+
         pub_cfg = publication.to_config()
         with open(self.filename, "a", encoding=files_encoding) as f:
-            f.write(f'\n{ApacheConfig.start_tag} {ibname}\n')
+            f.write(f'\n{ApacheConfig.start_tag} {publication.name}\n')
             f.write(pub_cfg)
-            f.write(f'\n{ApacheConfig.end_tag} {ibname}')
+            f.write(f'\n{ApacheConfig.end_tag} {publication.name}')
 
     def get_publication(self, ibname: str) -> Optional[WebPublication]:
         if not self.is_publicated(ibname):
@@ -277,7 +295,7 @@ class ApacheConfig:
         publication = WebPublication.from_config(ibname, ''.join(pub_lines))
         return publication
 
-    def remove_publication(self, ibname: str):
+    def remove_publication(self, ibname: str, destroy: bool = True):
         if not self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" not publicated')
 
@@ -302,8 +320,9 @@ class ApacheConfig:
             new_lines.append(line)
 
         # remove vrd and directory
-        publication = WebPublication.from_config(ibname, ''.join(pub_lines))
-        publication.remove()
+        if destroy:
+            publication = WebPublication.from_config(ibname, ''.join(pub_lines))
+            publication.remove()
 
         # write new config
         with open(self.filename, "w", encoding=files_encoding) as f:
@@ -339,7 +358,7 @@ class Commands:
         return os.path.isdir(self._dir_path)
 
     def _is_url_base_valid(self) -> bool:
-        return is_valid_filepath(self._url_base, platform='posix')
+        return is_valid_filepath(self._url_base, platform='posix') and self._url_base.startswith('/')
 
     def _is_module_valid(self) -> bool:
         if 'platform_path' not in self._config:
@@ -375,7 +394,7 @@ class Commands:
             self._apache_cfg.add_1cws_module(module)
             self._log.info('module added')
 
-    def list(self):
+    def list(self) -> List[str]:
         """ List publications """
 
         return list(self._apache_cfg.publications)
@@ -388,11 +407,25 @@ class Commands:
             return publication
         return publication.describe()
 
-    def add(self, ibname: str):
+    def add(self, ibname: str, url: Optional[str] = None) -> str:
         """ Add new publication """
 
-        self._apache_cfg.add_publication(ibname)
+        publication = self._apache_cfg.create_publication(ibname, url)
+        self._apache_cfg.add_publication(publication)
         self._log.info(f'publication added: {ibname}')
+        return publication.url_path
+
+    def set_url(self, ibname: str, url: str) -> None:
+        """ Set publication url """
+
+        publication = self._apache_cfg.get_publication(ibname)
+        if publication is None:
+            raise KeyError(f'infobase "{ibname}" not publicated')
+
+        publication.url_path = urlpath_join(self._url_base, url)
+        self._apache_cfg.remove_publication(publication.name, destroy=False)
+        self._apache_cfg.add_publication(publication)
+        self._log.info(f'publication changed: {ibname}')
 
     def remove(self, ibname: str):
         """ Remove publication """
