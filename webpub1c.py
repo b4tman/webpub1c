@@ -24,6 +24,9 @@ _xml_esc = str.maketrans({
 
 files_encoding: str = 'utf-8'
 
+default_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+default_templates_env = jinja2.Environment(loader=jinja2.FileSystemLoader(default_templates_dir))
+
 
 def xml_escape(txt: str) -> str:
     return txt.translate(_xml_esc)
@@ -44,6 +47,7 @@ def urlpath_join(prefix: str, url_path: str) -> str:
         url_path = prefix + url_path
     return url_path
 
+
 class WebPublication:
     """ 1c web publication info for apache2 config """
 
@@ -51,7 +55,8 @@ class WebPublication:
                  directory: str = '',
                  vrd_filename: str = '',
                  url_path: str = '',
-                 vrd_params: Optional[VRDConfig] = None):
+                 vrd_params: Optional[VRDConfig] = None,
+                 templates_env: Optional[jinja2.Environment] = None):
         if '' == name:
             raise ValueError('publication name empty')
         self.name: str = name
@@ -62,8 +67,13 @@ class WebPublication:
         if vrd_params is not None:
             self.vrd_params = vrd_params
 
+        if templates_env is None:
+            self.templates_env = default_templates_env
+        else:
+            self.templates_env = templates_env
+
     @staticmethod
-    def from_config(name: str, config: str) -> 'WebPublication':
+    def from_config(name: str, config: str, templates_env: Optional[jinja2.Environment] = None) -> 'WebPublication':
         """ read publication info from config block """
 
         url_expr = re.compile(r'Alias\s"([^"]+)"')
@@ -77,13 +87,12 @@ class WebPublication:
         _url: str = url_match.group(1) if url_match is not None else ""
         _dir: str = dir_match.group(1) if dir_match is not None else ""
         _vrd: str = vrd_match.group(1) if vrd_match is not None else ""
-        return WebPublication(name, _dir, _vrd, _url)
+        return WebPublication(name, _dir, _vrd, _url, templates_env=templates_env)
 
     def to_config(self) -> str:
         """ get config block from publication info """
 
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
-        template = env.get_template('apache_pub.cfg')
+        template = self.templates_env.get_template('apache_pub.cfg')
         pub_params: Dict[str, str] = {
             'directory': self.directory,
             'vrd_filename': self.vrd_filename,
@@ -163,8 +172,7 @@ class WebPublication:
             'ibname': xml_escape(self.name)
         }
         vrd_params.update(self.vrd_params)
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
-        template = env.get_template('vrd.xml')
+        template = self.templates_env.get_template('vrd.xml')
 
         vrd_data: str = template.render(ctx=vrd_params)
         with open(self.vrd_filename, "w", encoding=files_encoding) as f:
@@ -199,12 +207,18 @@ class ApacheConfig:
                  vrd_path: str,
                  dir_path: str,
                  url_base: str,
-                 vrd_params: Optional[VRDConfig] = None):
+                 vrd_params: Optional[VRDConfig] = None,
+                 templates_env: Optional[jinja2.Environment] = None):
         self.filename: str = filename
         self.vrd_path: str = vrd_path
         self.dir_path: str = dir_path
         self.url_base: str = url_base
         self.vrd_params: Optional[VRDConfig] = vrd_params
+
+        if templates_env is None:
+            self.templates_env = default_templates_env
+        else:
+            self.templates_env = templates_env
 
     def is_valid(self) -> bool:
         return os.path.isfile(self.filename)
@@ -247,7 +261,7 @@ class ApacheConfig:
         if self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" already publicated')
 
-        publication = WebPublication(ibname, vrd_params=self.vrd_params)
+        publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env)
         publication.generate_paths(self.dir_path, self.vrd_path, self.url_base)
 
         if url_path is not None:
@@ -292,7 +306,7 @@ class ApacheConfig:
         if 0 == len(pub_lines):
             raise ValueError('can\'t parse config :(')
 
-        publication = WebPublication.from_config(ibname, ''.join(pub_lines))
+        publication = WebPublication.from_config(ibname, ''.join(pub_lines), templates_env=self.templates_env)
         return publication
 
     def remove_publication(self, ibname: str, destroy: bool = True):
@@ -347,9 +361,14 @@ class Commands:
         self._dir_path: str = self._config.get('dir_path', '')
         self._url_base: str = self._config.get('url_base', '')
 
+        templates_env = default_templates_env
+        if self._config.get('templates', None) is not None:
+            templates = self._config['templates']
+            templates_env = jinja2.Environment(loader=jinja2.FileSystemLoader(templates))
+
         self._apache_cfg = ApacheConfig(apache_config, self._vrd_path,
                                         self._dir_path, self._url_base,
-                                        vrd_params)
+                                        vrd_params, templates_env)
 
     def _is_vrd_path_valid(self) -> bool:
         return os.path.isdir(self._vrd_path)
