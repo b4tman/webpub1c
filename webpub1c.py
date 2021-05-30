@@ -254,6 +254,36 @@ class ApacheConfig:
         for match in start_expr.finditer(self.text):
             yield match.group(1).strip()
 
+    def iter(self) -> Iterator[WebPublication]:
+        start_pub = re.compile(r'^{}\s'.format(re.escape(ApacheConfig.start_tag)))
+        start_name = re.compile(r'^{}\s(.+)$'.format(re.escape(ApacheConfig.start_tag)))
+        end_pub = re.compile(r'^{}\s'.format(re.escape(ApacheConfig.end_tag)))
+
+        is_pub_started: bool = False
+        cur_pub_name: str = ""
+        cur_pub_lines: List[str] = []
+        lines: List[str] = self.text.splitlines(keepends=True)
+        for line in lines:
+            if is_pub_started:
+                if end_pub.match(line):
+                    if 0 == len(cur_pub_lines):
+                        raise ValueError('can\'t parse config :(')
+                    publication = WebPublication.from_config(cur_pub_name, ''.join(cur_pub_lines),
+                                                             templates_env=self.templates_env)
+                    yield publication
+                    cur_pub_name = ""
+                    cur_pub_lines.clear()
+                    is_pub_started = False
+                else:
+                    cur_pub_lines.append(line)
+                continue
+            if start_pub.match(line):
+                is_pub_started = True
+                match = start_name.match(line)
+                if match is None:
+                    raise ValueError('can\'t parse config :(')
+                cur_pub_name = match.group(1).strip()
+
     def is_publicated(self, ibname: str) -> bool:
         return ibname in self.publications
 
