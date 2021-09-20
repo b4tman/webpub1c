@@ -77,6 +77,17 @@ def test_add(temp_config):
     assert ['test123'] == cmd.list()
 
 
+def test_add_file(temp_config):
+    cmd = Commands(temp_config)
+    assert [] == cmd.list()
+    assert cmd.add('test_file', file='/test/file') == '/1c/test_file'
+    assert ['test_file'] == cmd.list()
+    info = cmd.get('test_file')
+    info = json.loads(info)
+    assert '/test/file' == info['infobase_filepath']
+    assert info['is_file_infobase']
+
+
 def test_remove(temp_config):
     cmd = Commands(temp_config)
     assert [] == cmd.list()
