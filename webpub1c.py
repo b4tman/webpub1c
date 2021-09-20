@@ -416,7 +416,7 @@ class Commands:
             return False
         return os.path.isfile(os.path.join(self._config['platform_path'], self._config['ws_module']))
 
-    def check(self):
+    def check(self) -> None:
         """ Check config """
 
         print('config:')
@@ -428,12 +428,12 @@ class Commands:
         print('  url base: {}'.format('ok' if self._is_url_base_valid() else 'invalid'))
         print(' ws module: {}'.format('ok' if self._is_module_valid() else 'not found'))
 
-    def has_module(self):
+    def has_module(self) -> bool:
         """ Ensure apache config has 1cws module """
 
-        print(self._apache_cfg.has_1cws_module())
+        return self._apache_cfg.has_1cws_module()
 
-    def add_module(self):
+    def add_module(self) -> None:
         """ Add 1cws module to apache config """
 
         if self._apache_cfg.has_1cws_module():
@@ -476,7 +476,7 @@ class Commands:
         self._apache_cfg.add_publication(publication)
         self._log.info(f'publication changed: {ibname}')
 
-    def remove(self, ibname: str):
+    def remove(self, ibname: str) -> None:
         """ Remove publication """
 
         self._apache_cfg.remove_publication(ibname)
