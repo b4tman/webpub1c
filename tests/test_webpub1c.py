@@ -95,7 +95,9 @@ def test_get(temp_config):
         'name': 'test123',
         'url_path': '/1c/test123',
         'directory': os.path.join(cmd._config['dir_path'], 'test123'),
-        'vrd_filename': os.path.join(cmd._config['vrd_path'], 'test123.vrd')
+        'vrd_filename': os.path.join(cmd._config['vrd_path'], 'test123.vrd'),
+        'infobase_filepath': '',
+        'is_file_infobase': False,
     }
 
 
