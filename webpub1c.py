@@ -3,11 +3,11 @@
 
 import logging
 import os
-import pprint
 import re
 import unicodedata
 from typing import List, Dict, Union, Optional, Iterator
 
+import json
 import fire
 import jinja2
 import yaml
@@ -106,12 +106,12 @@ class WebPublication:
     def describe(self) -> str:
         """ describe publication info"""
 
-        return pprint.pformat({
+        return json.dumps({
             'name': self.name,
             'url_path': self.url_path,
             'directory': self.directory,
             'vrd_filename': self.vrd_filename,
-        }, 2)
+        }, ensure_ascii=False, indent=2)
 
     def generate_paths(self, dir_prefix: str, vrd_prefix: str, url_prefix: str):
         """ generate directory path, vrd filepath, url for named publication """
@@ -422,7 +422,7 @@ class Commands:
         """ Check config """
 
         print('config:')
-        pprint.pprint(self._config, indent=2)
+        print(json.dumps(self._config, ensure_ascii=False, indent=2))
         print('\n---')
         print('apache cfg: {}'.format('ok' if self._apache_cfg.is_valid() else 'invalid'))
         print('  vrd path: {}'.format('ok' if self._is_vrd_path_valid() else 'invalid'))
