@@ -364,6 +364,10 @@ class ApacheConfig:
             if is_pub_started:
                 if end_pub.match(line):
                     is_pub_started = False
+                    # remove last empty line
+                    if len(new_lines) > 0:
+                        if new_lines[-1].strip() == '':
+                            new_lines.pop()
                 else:
                     pub_lines.append(line)
                 continue
