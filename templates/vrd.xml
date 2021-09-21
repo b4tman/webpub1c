@@ -5,12 +5,10 @@
 		base="{{ ctx.url_path }}" {% if ctx.is_file_infobase %}
 		ib="File=&quot;{{ ctx.infobase_filepath }}&quot;;" {% else %}
 		ib="Srvr=&quot;{{ ctx.server_addr }}&quot;;Ref=&quot;{{ ctx.ibname }}&quot;;" {% endif %}
-		enableStandardOData="false">
-    {% if ctx.debug %}
+		enableStandardOData="false"> {% if ctx.debug %}
 	<debug enable="true"
 			protocol="tcp"
-			url="tcp://{{ ctx.debug }}"/>
-	{% endif %}
+			url="tcp://{{ ctx.debug }}"/> {% endif %}
     <httpServices publishByDefault="false">
 	</httpServices>
 	<ws>
