@@ -4,14 +4,6 @@ from webpub1c import *
 
 
 @pytest.mark.parametrize('input_str,expected_str', [
-    ('<img src="test" />', '&lt;img src=&quot;test&quot; /&gt;'),
-    ('test1 & test2', 'test1 &amp; test2'),
-])
-def test_xml_escape(input_str: str, expected_str: str):
-    assert xml_escape(input_str) == expected_str
-
-
-@pytest.mark.parametrize('input_str,expected_str', [
     ('Бухгалтерия 2345', 'buhgalterija-2345'),
     ('true & false', 'true-false'),
 ])
