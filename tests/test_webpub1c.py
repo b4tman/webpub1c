@@ -28,7 +28,7 @@ def temp_config(tmpdir) -> str:
     vrd_path = tmpdir.mkdir('vrds')
     dir_path = tmpdir.mkdir('pubs')
     apache_config = tmpdir.join('apache.cfg')
-    apache_config.write('#start')
+    apache_config.write('#start\n')
 
     with open(configfile, 'w') as f:
         yaml.dump({
@@ -87,6 +87,24 @@ def test_remove(cmd):
     assert ['test123'] == cmd.list()
     cmd.remove('test123')
     assert [] == cmd.list()
+
+
+def test_remove_clean_cfg(cmd):
+    """
+    the contents of the apache configuration
+    before adding and after removing should be the same
+    """
+    assert [] == cmd.list()
+    cfg_before_add = cmd._apache_cfg.text
+    cmd.add('test123')
+    cmd.add('test456')
+    cfg_before_remove = cmd._apache_cfg.text
+    cmd.remove('test123')
+    cmd.remove('test456')
+    cfg_after_remove = cmd._apache_cfg.text
+
+    assert cfg_before_add != cfg_before_remove
+    assert cfg_before_add == cfg_after_remove
 
 
 def test_get(cmd):
