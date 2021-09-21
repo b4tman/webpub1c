@@ -54,32 +54,32 @@ def temp_config(tmpdir) -> str:
     return configfile
 
 
-def test_has_module(temp_config):
-    cmd = Commands(temp_config)
+@pytest.fixture
+def cmd(temp_config) -> Commands:
+    return Commands(temp_config)
+
+
+def test_has_module(cmd):
     assert not cmd.has_module()
 
 
-def test_add_module(temp_config):
-    cmd = Commands(temp_config)
+def test_add_module(cmd):
     assert not cmd.has_module()
     cmd.add_module()
     assert cmd.has_module()
 
 
-def test_list(temp_config):
-    cmd = Commands(temp_config)
+def test_list(cmd):
     assert [] == cmd.list()
 
 
-def test_add(temp_config):
-    cmd = Commands(temp_config)
+def test_add(cmd):
     assert [] == cmd.list()
     assert cmd.add('test123') == '/1c/test123'
     assert ['test123'] == cmd.list()
 
 
-def test_add_file(temp_config):
-    cmd = Commands(temp_config)
+def test_add_file(cmd):
     assert [] == cmd.list()
     assert cmd.add('test_file', file='/test/file') == '/1c/test_file'
     assert ['test_file'] == cmd.list()
@@ -89,8 +89,7 @@ def test_add_file(temp_config):
     assert info['is_file_infobase']
 
 
-def test_remove(temp_config):
-    cmd = Commands(temp_config)
+def test_remove(cmd):
     assert [] == cmd.list()
     cmd.add('test123')
     assert ['test123'] == cmd.list()
@@ -98,8 +97,7 @@ def test_remove(temp_config):
     assert [] == cmd.list()
 
 
-def test_get(temp_config):
-    cmd = Commands(temp_config)
+def test_get(cmd):
     assert [] == cmd.list()
     cmd.add('test123')
     info = cmd.get('test123')
@@ -113,8 +111,7 @@ def test_get(temp_config):
     }
 
 
-def test_set_url(temp_config):
-    cmd = Commands(temp_config)
+def test_set_url(cmd):
     assert [] == cmd.list()
     cmd.add('test123')
     info = cmd.get('test123')
