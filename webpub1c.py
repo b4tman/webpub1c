@@ -17,19 +17,10 @@ from transliterate import translit
 DictConfig = Dict[str, Union[str, 'DictConfig', None]]
 VRDConfig = Dict[str, Union[str, None]]
 
-_xml_esc = str.maketrans({
-    "&": "&amp;", '"': "&quot;", "'": "&apos;",
-    "<": "&lt;", ">": "&gt;",
-})
-
 files_encoding: str = 'utf-8'
 
 default_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
 default_templates_env = jinja2.Environment(loader=jinja2.FileSystemLoader(default_templates_dir))
-
-
-def xml_escape(txt: str) -> str:
-    return txt.translate(_xml_esc)
 
 
 def slugify(value: str, lang: str = 'ru') -> str:
@@ -183,9 +174,9 @@ class WebPublication:
             raise ValueError(f'vrd file "{self.vrd_filename}" exists')
 
         vrd_params: VRDConfig = {
-            'url_path': xml_escape(self.url_path),
-            'ibname': xml_escape(self.name),
-            'infobase_filepath': xml_escape(self.infobase_filepath),
+            'url_path': jinja2.escape(self.url_path),
+            'ibname': jinja2.escape(self.name),
+            'infobase_filepath': jinja2.escape(self.infobase_filepath),
             'is_file_infobase': self.is_file_infobase(),
         }
         vrd_params.update(self.vrd_params)
