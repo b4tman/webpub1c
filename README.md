@@ -32,6 +32,7 @@ _COMMAND_ is one of the following:
 - `webpub1c.py list` - list publications
 - `webpub1c.py add test` - add publication with name _'test'_ (infobase name)
 - `webpub1c.py add test --url my-infobase` - add publication with name _'test'_ and url _'/1c/my-infobase'_ (_'/1c'_ is **url_base** value in config)
+- `webpub1c.py add test --file /path/to/infobase` - add publication with name _'test'_ for file infobase in _'/path/to/infobase'_ folder
 - `webpub1c.py set_url test another-infobase` - set url for publication with name _'test'_, to _'/1c/another-infobase'_
 - `webpub1c.py get test` - get info about publication with name _'test'_
 - `webpub1c.py remove test` - remove publication with name _'test'_

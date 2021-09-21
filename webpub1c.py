@@ -58,7 +58,8 @@ class WebPublication:
                  vrd_filename: str = '',
                  url_path: str = '',
                  vrd_params: Optional[VRDConfig] = None,
-                 templates_env: Optional[jinja2.Environment] = None):
+                 templates_env: Optional[jinja2.Environment] = None,
+                 infobase_filepath=''):
         if '' == name:
             raise ValueError('publication name empty')
         self.name: str = name
@@ -74,6 +75,8 @@ class WebPublication:
         else:
             self.templates_env = templates_env
 
+        self.infobase_filepath: str = infobase_filepath
+
     @staticmethod
     def from_config(name: str, config: str, templates_env: Optional[jinja2.Environment] = None) -> 'WebPublication':
         """ read publication info from config block """
@@ -81,15 +84,18 @@ class WebPublication:
         url_expr = re.compile(r'Alias\s"([^"]+)"')
         dir_expr = re.compile(r'<Directory\s"([^"]+)">')
         vrd_expr = re.compile(r'ManagedApplicationDescriptor\s"([^"]+)"')
+        file_expr = re.compile(r'#\sinfobase_filepath:\s"([^"]+)"')
 
         url_match = url_expr.search(config)
         dir_match = dir_expr.search(config)
         vrd_match = vrd_expr.search(config)
+        file_match = file_expr.search(config)
 
         _url: str = url_match.group(1) if url_match is not None else ""
         _dir: str = dir_match.group(1) if dir_match is not None else ""
         _vrd: str = vrd_match.group(1) if vrd_match is not None else ""
-        return WebPublication(name, _dir, _vrd, _url, templates_env=templates_env)
+        _file: str = file_match.group(1) if file_match is not None else ""
+        return WebPublication(name, _dir, _vrd, _url, templates_env=templates_env, infobase_filepath=_file)
 
     def to_config(self) -> str:
         """ get config block from publication info """
@@ -99,9 +105,14 @@ class WebPublication:
             'directory': self.directory,
             'vrd_filename': self.vrd_filename,
             'url_path': self.url_path,
-            'name': self.name
+            'name': self.name,
+            'infobase_filepath': self.infobase_filepath,
+            'is_file_infobase': self.is_file_infobase(),
         }
         return template.render(ctx=pub_params)
+
+    def is_file_infobase(self):
+        return '' != self.infobase_filepath
 
     def describe(self) -> str:
         """ describe publication info"""
@@ -111,6 +122,8 @@ class WebPublication:
             'url_path': self.url_path,
             'directory': self.directory,
             'vrd_filename': self.vrd_filename,
+            'infobase_filepath': self.infobase_filepath,
+            'is_file_infobase': self.is_file_infobase(),
         }, ensure_ascii=False, indent=2)
 
     def generate_paths(self, dir_prefix: str, vrd_prefix: str, url_prefix: str):
@@ -171,7 +184,9 @@ class WebPublication:
 
         vrd_params: VRDConfig = {
             'url_path': xml_escape(self.url_path),
-            'ibname': xml_escape(self.name)
+            'ibname': xml_escape(self.name),
+            'infobase_filepath': xml_escape(self.infobase_filepath),
+            'is_file_infobase': self.is_file_infobase(),
         }
         vrd_params.update(self.vrd_params)
         template = self.templates_env.get_template('vrd.xml')
@@ -289,11 +304,11 @@ class ApacheConfig:
     def is_publicated(self, ibname: str) -> bool:
         return ibname in self.publications
 
-    def create_publication(self, ibname: str, url_path: Optional[str] = None) -> WebPublication:
+    def create_publication(self, ibname: str, url_path: Optional[str] = None, infobase_filepath='') -> WebPublication:
         if self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" already publicated')
 
-        publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env)
+        publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env, infobase_filepath=infobase_filepath)
         publication.generate_paths(self.dir_path, self.vrd_path, self.url_base)
 
         if url_path is not None:
@@ -458,10 +473,10 @@ class Commands:
             return publication
         return publication.describe()
 
-    def add(self, ibname: str, url: Optional[str] = None) -> str:
+    def add(self, ibname: str, url: Optional[str] = None, file: str = '') -> str:
         """ Add new publication """
 
-        publication = self._apache_cfg.create_publication(ibname, url)
+        publication = self._apache_cfg.create_publication(ibname, url, file)
         self._apache_cfg.add_publication(publication)
         self._log.info(f'publication added: {ibname}')
         return publication.url_path

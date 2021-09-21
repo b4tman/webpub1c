@@ -77,6 +77,17 @@ def test_add(temp_config):
     assert ['test123'] == cmd.list()
 
 
+def test_add_file(temp_config):
+    cmd = Commands(temp_config)
+    assert [] == cmd.list()
+    assert cmd.add('test_file', file='/test/file') == '/1c/test_file'
+    assert ['test_file'] == cmd.list()
+    info = cmd.get('test_file')
+    info = json.loads(info)
+    assert '/test/file' == info['infobase_filepath']
+    assert info['is_file_infobase']
+
+
 def test_remove(temp_config):
     cmd = Commands(temp_config)
     assert [] == cmd.list()
@@ -95,7 +106,9 @@ def test_get(temp_config):
         'name': 'test123',
         'url_path': '/1c/test123',
         'directory': os.path.join(cmd._config['dir_path'], 'test123'),
-        'vrd_filename': os.path.join(cmd._config['vrd_path'], 'test123.vrd')
+        'vrd_filename': os.path.join(cmd._config['vrd_path'], 'test123.vrd'),
+        'infobase_filepath': '',
+        'is_file_infobase': False,
     }
 
 
