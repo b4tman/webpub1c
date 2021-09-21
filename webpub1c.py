@@ -299,7 +299,8 @@ class ApacheConfig:
         if self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" already publicated')
 
-        publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env, infobase_filepath=infobase_filepath)
+        publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env,
+                                     infobase_filepath=infobase_filepath)
         publication.generate_paths(self.dir_path, self.vrd_path, self.url_base)
 
         if url_path is not None:
