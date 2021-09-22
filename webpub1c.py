@@ -10,6 +10,7 @@ from typing import List, Dict, Union, Optional, Iterator
 import json
 import fire
 import jinja2
+import markupsafe
 import yaml
 from pathvalidate import is_valid_filepath, sanitize_filename
 from transliterate import translit
@@ -174,9 +175,9 @@ class WebPublication:
             raise ValueError(f'vrd file "{self.vrd_filename}" exists')
 
         vrd_params: VRDConfig = {
-            'url_path': jinja2.escape(self.url_path),
-            'ibname': jinja2.escape(self.name),
-            'infobase_filepath': jinja2.escape(self.infobase_filepath),
+            'url_path': markupsafe.escape(self.url_path),
+            'ibname': markupsafe.escape(self.name),
+            'infobase_filepath': markupsafe.escape(self.infobase_filepath),
             'is_file_infobase': self.is_file_infobase(),
         }
         vrd_params.update(self.vrd_params)
