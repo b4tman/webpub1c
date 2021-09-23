@@ -1,6 +1,6 @@
-apache_config: test/apache.cfg
-vrd_path: test/vrds
-dir_path: test/pubs
+apache_config: example/apache.cfg
+vrd_path: example/vrds
+dir_path: example/pubs
 url_base: /1c
 platform_path: /opt/1cv8/x86_64/current
 ws_module: wsap24.so
