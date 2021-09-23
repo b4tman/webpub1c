@@ -1,25 +1,10 @@
+import json
+import os
+
 import pytest
+import yaml
 
-from webpub1c import *
-
-
-@pytest.mark.parametrize('input_str,expected_str', [
-    ('Бухгалтерия 2345', 'buhgalterija-2345'),
-    ('true & false', 'true-false'),
-])
-def test_slugify(input_str: str, expected_str: str):
-    assert slugify(input_str) == expected_str
-
-
-@pytest.mark.parametrize('prefix,url_path,expected_str', [
-    ('/base', 'path', '/base/path'),
-    ('/base', '/path', '/base/path'),
-    ('/base/', 'path', '/base/path'),
-    ('/base/', '/path', '/base/path'),
-    ('/base/', '/base/path', '/base/path'),
-])
-def test_urlpath_join(prefix: str, url_path: str, expected_str: str):
-    assert urlpath_join(prefix, url_path) == expected_str
+from webpub1c import Commands
 
 
 @pytest.fixture
@@ -132,4 +117,3 @@ def test_set_url(cmd):
     info = cmd.get('test123')
     info = json.loads(info)
     assert '/1c/hello-world' == info['url_path']
-
