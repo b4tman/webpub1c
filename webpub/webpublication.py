@@ -1,13 +1,22 @@
 import json
 import os
 import re
-from typing import Optional, Dict
+import shutil
+from typing import Optional, Dict, Callable, Iterable
 
 import jinja2
 import markupsafe
 from pathvalidate import is_valid_filepath, sanitize_filename
 
 from .common import VRDConfig, files_encoding, default_templates_env, slugify
+
+
+def _try(actions: Iterable[Callable[[], None]]) -> None:
+    for action in actions:
+        try:
+            action()
+        finally:
+            pass
 
 
 class WebPublication:
@@ -134,15 +143,19 @@ class WebPublication:
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
 
-    def remove_directory(self):
+    def remove_directory(self, force: bool = False):
         if os.path.exists(self.directory):
-            os.rmdir(self.directory)
+            if force:
+                shutil.rmtree(self.directory)
+            else:
+                os.rmdir(self.directory)
 
-    def create_vrd(self):
-        if not self.is_valid():
-            raise ValueError('publication is invalid')
-        if os.path.exists(self.vrd_filename):
-            raise ValueError(f'vrd file "{self.vrd_filename}" exists')
+    def create_vrd(self, force: bool = False):
+        if not force:
+            if not self.is_valid():
+                raise ValueError('publication is invalid')
+            if os.path.exists(self.vrd_filename):
+                raise ValueError(f'vrd file "{self.vrd_filename}" exists')
 
         vrd_params: VRDConfig = {
             'url_path': markupsafe.escape(self.url_path),
@@ -161,16 +174,26 @@ class WebPublication:
         if os.path.exists(self.vrd_filename):
             os.unlink(self.vrd_filename)
 
-    def create(self):
+    def create(self, force: bool = False):
         """ create all """
+
+        if force:
+            _try([self.create_directory,
+                  lambda: self.create_vrd(force=True)])
+            return
 
         if not self.is_ok_to_create():
             raise ValueError(f'can\'t create pub: {self.name}')
         self.create_directory()
         self.create_vrd()
 
-    def remove(self):
+    def remove(self, force: bool = False):
         """ remove all """
+
+        if force:
+            _try([self.remove_vrd,
+                  lambda: self.remove_directory(force)])
+            return
 
         self.remove_vrd()
         self.remove_directory()

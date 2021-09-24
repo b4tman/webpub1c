@@ -98,8 +98,10 @@ class ApacheConfig:
     def is_publicated(self, ibname: str) -> bool:
         return ibname in self.publications
 
-    def create_publication(self, ibname: str, url_path: Optional[str] = None, infobase_filepath='') -> WebPublication:
-        if self.is_publicated(ibname):
+    def create_publication(self, ibname: str, url_path: Optional[str] = None,
+                           infobase_filepath='', force: bool = False) -> WebPublication:
+
+        if self.is_publicated(ibname) and not force:
             raise KeyError(f'infobase "{ibname}" already publicated')
 
         publication = WebPublication(ibname, vrd_params=self.vrd_params, templates_env=self.templates_env,
@@ -109,15 +111,18 @@ class ApacheConfig:
         if url_path is not None:
             publication.url_path = urlpath_join(self.url_base, url_path)
 
-        if not publication.is_ok_to_create():
+        if not (force or publication.is_ok_to_create()):
             raise ValueError(f'can\'t create publication: {publication.describe()}')
 
-        publication.create()
+        publication.create(force)
         return publication
 
-    def add_publication(self, publication: WebPublication) -> None:
+    def add_publication(self, publication: WebPublication, force: bool = False) -> None:
         if self.is_publicated(publication.name):
-            raise KeyError(f'infobase "{publication.name}" already publicated')
+            if force:
+                self.remove_publication(publication.name, destroy=False)
+            else:
+                raise KeyError(f'infobase "{publication.name}" already publicated')
 
         pub_cfg = publication.to_config()
         with open(self.filename, "a", encoding=files_encoding) as f:
@@ -151,7 +156,7 @@ class ApacheConfig:
         publication = WebPublication.from_config(ibname, ''.join(pub_lines), templates_env=self.templates_env)
         return publication
 
-    def remove_publication(self, ibname: str, destroy: bool = True):
+    def remove_publication(self, ibname: str, destroy: bool = True, force: bool = False):
         if not self.is_publicated(ibname):
             raise KeyError(f'infobase "{ibname}" not publicated')
 
@@ -182,7 +187,7 @@ class ApacheConfig:
         # remove vrd and directory
         if destroy:
             publication = WebPublication.from_config(ibname, ''.join(pub_lines))
-            publication.remove()
+            publication.remove(force)
 
         # write new config
         with open(self.filename, "w", encoding=files_encoding) as f:

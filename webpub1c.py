@@ -98,11 +98,11 @@ class Commands:
             return publication
         return publication.describe()
 
-    def add(self, ibname: str, url: Optional[str] = None, file: str = '') -> str:
+    def add(self, ibname: str, url: Optional[str] = None, file: str = '', force: bool = False) -> str:
         """ Add new publication """
 
-        publication = self._apache_cfg.create_publication(ibname, url, file)
-        self._apache_cfg.add_publication(publication)
+        publication = self._apache_cfg.create_publication(ibname, url, file, force)
+        self._apache_cfg.add_publication(publication, force)
         self._log.info(f'publication added: {ibname}')
         return publication.url_path
 
@@ -118,10 +118,10 @@ class Commands:
         self._apache_cfg.add_publication(publication)
         self._log.info(f'publication changed: {ibname}')
 
-    def remove(self, ibname: str) -> None:
+    def remove(self, ibname: str, force: bool = False) -> None:
         """ Remove publication """
 
-        self._apache_cfg.remove_publication(ibname)
+        self._apache_cfg.remove_publication(ibname, force=force)
         self._log.info(f'publication removed: {ibname}')
 
 
