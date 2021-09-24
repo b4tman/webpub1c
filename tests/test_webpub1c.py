@@ -56,6 +56,23 @@ def test_add(cmd):
     assert ['test123'] == cmd.list()
 
 
+def test_add_force(cmd):
+    cmd.add('test123')
+    assert cmd.list() == ['test123']
+    with pytest.raises(KeyError, match='already publicated'):
+        cmd.add('test123')
+    cmd.add('test123', force=True)
+    assert cmd.list() == ['test123']
+
+
+def test_add_force_dir_exist(cmd):
+    os.mkdir(os.path.join(cmd._config['dir_path'], 'test123'))
+    with pytest.raises(ValueError, match='can\'t create publication'):
+        cmd.add('test123')
+    cmd.add('test123', force=True)
+    assert cmd.list() == ['test123']
+
+
 def test_add_file(cmd):
     assert [] == cmd.list()
     assert cmd.add('test_file', file='/test/file') == '/1c/test_file'
@@ -72,6 +89,19 @@ def test_remove(cmd):
     assert ['test123'] == cmd.list()
     cmd.remove('test123')
     assert [] == cmd.list()
+
+
+def test_remove_force(cmd):
+    cmd.add('test123')
+
+    lockfile = os.path.join(cmd._config['dir_path'], 'test123', 'lock')
+    with open(lockfile, 'w') as f:
+        f.write('')
+
+    with pytest.raises(OSError):
+        cmd.remove('test123')
+    cmd.remove('test123', force=True)
+    assert cmd.list() == []
 
 
 def test_remove_clean_cfg(cmd):
