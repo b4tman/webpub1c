@@ -2,7 +2,7 @@ import json
 import os
 import re
 import shutil
-from typing import Optional, Dict, Callable, Iterable
+from typing import Optional, Dict
 
 import jinja2
 import markupsafe
