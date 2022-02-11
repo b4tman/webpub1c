@@ -9,8 +9,8 @@
 	<debug enable="true"
 			protocol="tcp"
 			url="tcp://{{ ctx.debug }}"/> {% endif %}
-    <httpServices publishByDefault="false">
+    <httpServices publishByDefault="true" publishExtensionsByDefault="true">
 	</httpServices>
-	<ws>
+	<ws enable="true" pointEnableCommon="true" publishExtensionsByDefault="true">
 	</ws>
 </point>
