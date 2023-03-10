@@ -23,10 +23,8 @@ def slugify(value: str, lang: str = 'ru') -> str:
 
 
 def urlpath_join(prefix: str, url_path: str) -> str:
-    if not prefix.endswith('/'):
-        prefix += '/'
-    if not url_path.startswith(prefix):
-        if url_path.startswith('/'):
-            url_path = url_path.lstrip('/')
-        url_path = prefix + url_path
-    return url_path
+    prefix = prefix.rstrip('/') + '/'
+    if url_path.startswith(prefix):
+        return url_path
+    url_path = url_path.lstrip('/')
+    return f"{prefix}{url_path}" if url_path else prefix[:-1]
