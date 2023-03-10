@@ -2,7 +2,6 @@ import pytest
 
 from webpub1c.common import slugify, urlpath_join
 
-
 @pytest.mark.parametrize(
     "input_str,expected_str",
     [
@@ -11,7 +10,9 @@ from webpub1c.common import slugify, urlpath_join
     ],
 )
 def test_slugify(input_str: str, expected_str: str):
-    assert slugify(input_str) == expected_str
+    assert slugify(input_str)  ==expected_str
+
+
 
 
 @pytest.mark.parametrize(
