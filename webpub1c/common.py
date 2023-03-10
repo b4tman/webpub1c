@@ -10,7 +10,7 @@ VRDConfig = Dict[str, Union[str, None]]
 DictConfig = Dict[str, Union[str, "DictConfig", None]]
 
 files_encoding: str = "utf-8"
-default_templates_dir = os.path.join(os.path.dirname(__file__), "../templates")
+default_templates_dir = os.path.join(os.path.dirname(__file__), "templates")
 default_templates_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(default_templates_dir)
 )
