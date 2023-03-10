@@ -11,8 +11,8 @@ import jinja2
 import yaml
 from pathvalidate import is_valid_filepath
 
-from webpub.apache_config import ApacheConfig
-from webpub.common import VRDConfig, files_encoding, default_templates_env, DictConfig, urlpath_join
+from .apache_config import ApacheConfig
+from .common import VRDConfig, files_encoding, default_templates_env, DictConfig, urlpath_join
 
 
 class Commands:
@@ -125,5 +125,8 @@ class Commands:
         self._log.info(f'publication removed: {ibname}')
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(Commands)
+
+if __name__ == "__main__":
+    main()

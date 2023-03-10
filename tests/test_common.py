@@ -1,6 +1,6 @@
 import pytest
 
-from webpub.common import slugify, urlpath_join
+from webpub1c.common import slugify, urlpath_join
 
 
 @pytest.mark.parametrize('input_str,expected_str', [
