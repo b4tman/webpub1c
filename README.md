@@ -15,7 +15,7 @@ To install using [pip](https://pypi.python.org/pypi/pip), run:
 pip install git+https://github.com/b4tman/webpub1c
 ```
 
-Or download source code and install using poetry:
+Or download source code and install using [Poetry](https://python-poetry.org/docs/):
 
 ```sh
 # install poetry
