@@ -4,7 +4,7 @@ import os
 import pytest
 import yaml
 
-from webpub1c import Commands
+from webpub1c.cli import Commands
 
 
 @pytest.fixture

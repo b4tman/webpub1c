@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "webpub1c"
+version = "0.1.0"
+description = "1C: Enterprise infobase web publication tool"
+authors = ["Dmitry Belyaev <b4tm4n@mail.ru>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/b4tman/webpub1c"
+repository = "https://github.com/b4tman/webpub1c"
+keywords = ["1C", "apache", "publication", "web", "infobase"]
+classifiers = [
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+jinja2 = "3.0"
+fire = "0.4.0"
+pyyaml = "5.4.1"
+pathvalidate = "2.4.1"
+transliterate = "1.10.2"
+markupsafe = "2.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+flake8 = "^5.0.4"
+
+[tool.poetry.scripts]
+webpub1c = "webpub1c.cli:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
