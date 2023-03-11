@@ -1,11 +1,13 @@
 # webpub1c
 
-1C: Enterprise infobase web publication tool
+1C: Enterprise infobase web publication tool.
 
-for publicate 1C: Enterprise infobase with Apache web server
-( inspired by [TihonV/vrdmaker](https://github.com/TihonV/vrdmaker) )
+For 1C: Enterprise infobase publication with Apache web server
+(inspired by [TihonV/vrdmaker](https://github.com/TihonV/vrdmaker) ).
+As an alternative to standard [webinst](https://1c-dn.com/anticrisis/tools-and-technologies/embedded-web-client/setting-up/) utility.
 
-as an alternative to standart [webinst](https://1c-dn.com/anticrisis/tools-and-technologies/embedded-web-client/setting-up/) utility
+All publication data stored into apache configuration file and vrd files.
+With this tool you can **list**, **add** and **remove** publications.
 
 ## Installation
 
