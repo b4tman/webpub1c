@@ -11,7 +11,7 @@ As an alternative to standard [webinst](https://1c-dn.com/anticrisis/tools-and-t
 All publication data stored into apache configuration file and vrd files.
 With this tool you can **list**, **add** and **remove** publications.
 
-Documentation is available at [webpub1c.readthedocs.io](webpub1c.readthedocs.io).
+Documentation is available at [webpub1c.readthedocs.io](https://webpub1c.readthedocs.io).
 
 ## Installation
 
