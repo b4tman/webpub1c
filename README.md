@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/webpub1c/badge/?version=latest)](https://webpub1c.readthedocs.io/en/latest/?badge=latest)
+
 # webpub1c
 
 1C: Enterprise infobase web publication tool.
