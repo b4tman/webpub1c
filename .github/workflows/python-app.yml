@@ -29,7 +29,7 @@ jobs:
       uses: snok/install-poetry@v1
     
     - name: Install deps
-      run: poetry install
+      run: poetry install --with dev
     
     - name: Lint with flake8
       run: |

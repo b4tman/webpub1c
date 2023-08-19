@@ -1,5 +1,7 @@
 # webpub1c
 
+[![Documentation Status](https://readthedocs.org/projects/webpub1c/badge/?version=latest)](https://webpub1c.readthedocs.io/en/latest/?badge=latest)
+
 1C: Enterprise infobase web publication tool.
 
 For 1C: Enterprise infobase publication with Apache web server
@@ -8,6 +10,8 @@ As an alternative to standard [webinst](https://1c-dn.com/anticrisis/tools-and-t
 
 All publication data stored into apache configuration file and vrd files.
 With this tool you can **list**, **add** and **remove** publications.
+
+Documentation is available at [webpub1c.readthedocs.io](webpub1c.readthedocs.io).
 
 ## Installation
 
@@ -31,6 +35,24 @@ poetry run webpub1c
 ## Configuration
 
 The configuration is stored in [YAML](https://yaml.org) file `webpub1c.yml` located in the current working directory.
+
+```yaml
+apache_config: example/apache.cfg # path to Apache config file
+
+vrd_path: example/vrds  # path where to save .vrd files
+
+dir_path: example/pubs  # path where to save publication directories
+
+url_base: /1c # prefix for all publications
+
+platform_path: /opt/1cv8/x86_64/current # path to installed 1C:Enterprise platform bin dir
+
+ws_module: wsap24.so # 1c module file name (this one is for Apache 2.4)
+
+vrd_params: # template params for (all) vrd files
+  debug: # enable debug or not (bool)
+  server_addr: localhost # server addr
+```
 
 ## Usage
 
