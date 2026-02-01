@@ -8,7 +8,6 @@
 
 import importlib
 
-
 project = "webpub1c"
 copyright = "2023, b4tman"
 author = "b4tman"
